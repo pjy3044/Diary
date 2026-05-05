@@ -52,8 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 인증 관련 DOM
     const loginScreen      = document.getElementById('login-screen');
     const googleLoginBtn   = document.getElementById('google-login-btn');
-    const logoutBtn        = document.getElementById('logout-btn');
-    const userEmailEl      = document.getElementById('user-email');
+    // ※ logout-btn, user-email은 헤더에서 제거됨 → 하단 nav-logout 탭이 대신 처리
 
 
     // ─────────────────────────────────────────
@@ -134,18 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // ─────────────────────────────────────────
-    // 0-C. 로그아웃 버튼
-    // ─────────────────────────────────────────
-    logoutBtn.addEventListener('click', async () => {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) {
-            showToast('❌ 로그아웃 실패: ' + error.message);
-        } else {
-            showToast('👋 로그아웃 되었어요.');
-            // onAuthStateChange가 자동으로 로그인 화면을 다시 표시해줄 것임
-        }
-    });
+
+
 
 
 
