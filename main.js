@@ -1,14 +1,44 @@
 /**
- * AI 감정 일기 - main.js (음성 인식 강화 버전)
+ * AI 감정 일기 - main.js
  *
  * 담당하는 기능:
  * 1. 실시간 글자 수 카운터
- * 2. 음성 입력 - Web Speech API (실시간 중간 결과 표시 + 연속 인식)
- * 3. AI 상담사 응답 시뮬레이션
- * 4. 하단 네비게이션 탭 전환
+ * 2. 음성 입력 - Web Speech API
+ * 3. Gemini AI 상담사 연동 (/api/chat)
+ * 4. Supabase 익명 인증 + 일기 저장
+ * 5. 타임라인 목록 뷰
+ * 6. 하단 네비게이션 탭 전환
+ *
+ * Supabase 베스트 프랙티스:
+ * - signInAnonymously(): 회원가입 없이 즉시 사용
+ * - RLS: auth.uid() = user_id 정책으로 자신의 일기만 접근
+ * - anon key는 클라이언트에 노출해도 안전 (RLS가 보안 담당)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // ─────────────────────────────────────────
+    // 0. Supabase 초기화 (익명 인증)
+    // ─────────────────────────────────────────
+    // anon key는 클라이언트에 노출해도 안전합니다.
+    // 실제 보안은 Supabase RLS 정책이 담당합니다.
+    const SUPABASE_URL      = 'https://jszfwqenwkzoufaslfle.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemZ3cWVud2t6b3VmYXNsZmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzAxMDUsImV4cCI6MjA5MzM0NjEwNX0.A5uchwusRS8tKKxYClgbya31HQXJqEK35adwqxVCljQ';
+
+    // window.supabase는 CDN 스크립트가 로드한 전역 객체
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 익명 로그인: 회원가입 없이 즉시 사용 가능한 세션 생성
+    // 이미 세션이 있으면 재사용, 없으면 새로 생성
+    supabaseClient.auth.getSession().then(({ data }) => {
+        if (!data.session) {
+            supabaseClient.auth.signInAnonymously();
+        }
+    });
+
+    // 현재 AI 응답 상태 저장 (저장 버튼에서 사용)
+    let lastAiResult = null; // { emotion, counseling, tags }
+
 
     // ─────────────────────────────────────────
     // 1. DOM 요소 참조
@@ -18,9 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const charCounter      = document.querySelector('.char-counter');
     const voiceBtn         = document.getElementById('voice-btn');
     const aiBtn            = document.getElementById('ai-btn');
+    const saveBtn          = document.getElementById('save-btn');    // 저장 버튼
     const aiResponseText   = document.getElementById('ai-response-text');
     const hashtagContainer = document.getElementById('hashtag-container');
     const navItems         = document.querySelectorAll('.nav-item');
+    const viewDiary        = document.getElementById('view-diary');  // 일기 작성 뷰
+    const viewList         = document.getElementById('view-list');   // 타임라인 뷰
+    const timelineList     = document.getElementById('timeline-list');
+    const timelineLoading  = document.getElementById('timeline-loading');
+    const timelineEmpty    = document.getElementById('timeline-empty');
 
 
     // ─────────────────────────────────────────
@@ -369,6 +405,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // ── 해시태그 렌더링 ──
             renderHashtags(data.tags);
 
+            // ── AI 응답을 나중에 저장 버튼에서 쓸 수 있도록 저장 ──
+            lastAiResult = {
+                emotion:    data.emotion,
+                counseling: data.counseling,
+                tags:       data.tags
+            };
+
         } catch (err) {
             // ❗ 오류 원인을 AI 응답 카드에 직접 표시 (디버깅용)
             console.error('AI 상담사 오류 상세:', err.message);
@@ -391,15 +434,173 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // ─────────────────────────────────────────
-    // 6. 하단 네비게이션 탭 전환
+    // 6. 하단 네비게이션 탭 전환 + 뷰 제어
     // ─────────────────────────────────────────
     navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
+        item.addEventListener('click', async (e) => {
             e.preventDefault();
             navItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
+
+            const id = item.id;
+
+            if (id === 'nav-list') {
+                // 타임라인 뷰로 전환
+                viewDiary.classList.add('hidden');
+                viewList.classList.remove('hidden');
+                await loadTimeline(); // 일기 목록 로드
+            } else {
+                // 일기 작성 뷰로 전환
+                viewList.classList.add('hidden');
+                viewDiary.classList.remove('hidden');
+            }
         });
     });
+
+
+    // ─────────────────────────────────────────
+    // 7. 저장 버튼: Supabase에 일기 저장
+    // ─────────────────────────────────────────
+    saveBtn.addEventListener('click', async () => {
+        const content = diaryInput.value.trim();
+
+        // 일기 내용이 없으면 안내
+        if (!content) {
+            showToast('일기 내용을 먼저 작성해 주세요 ✏️');
+            return;
+        }
+
+        // Supabase 세션 확인
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            showToast('세션이 없어요. 잠시 후 다시 시도해 주세요.');
+            return;
+        }
+
+        // 저장 버튼 UI: 로딩 상태
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '⏳ 저장 중...';
+
+        // Supabase diaries 테이블에 일기 저장
+        // user_id는 현재 로그인한 사용자 ID
+        // RLS 정책이 auth.uid() = user_id를 검증함
+        const { error } = await supabaseClient.from('diaries').insert({
+            user_id:    session.user.id,
+            content:    content,
+            emotion:    lastAiResult?.emotion    || null,
+            counseling: lastAiResult?.counseling || null,
+            tags:       lastAiResult?.tags       || null,
+        });
+
+        if (error) {
+            console.error('Supabase 저장 오류:', error.message);
+            showToast('저장에 실패했어요: ' + error.message);
+        } else {
+            showToast('✅ 일기가 저장되었어요!');
+            // 저장 후 입력칼 초기화
+            diaryInput.value = '';
+            updateCharCount();
+            lastAiResult = null;
+            aiResponseText.textContent = '일기를 작성하고 \'AI 상담자에게 물어보기\' 버튼을 눠러주세요.';
+            hashtagContainer.innerHTML = '';
+            const emotionBadge = document.querySelector('.ai-response-title');
+            if (emotionBadge) emotionBadge.innerHTML = 'AI 상담사의 한마디';
+        }
+
+        // 저장 버튼 원상 복구
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 저장';
+    });
+
+
+    // ─────────────────────────────────────────
+    // 8. 타임라인 로드: Supabase에서 내 일기 목록 가져오기
+    // ─────────────────────────────────────────
+    async function loadTimeline() {
+        // 로딩 스피너 표시
+        timelineLoading.classList.remove('hidden');
+        timelineEmpty.classList.add('hidden');
+        timelineList.innerHTML = '';
+
+        // Supabase 세션 확인
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            timelineLoading.classList.add('hidden');
+            timelineEmpty.classList.remove('hidden');
+            return;
+        }
+
+        // 내 일기만 최신순으로 가져오기
+        // RLS 정책으로 다른 사용자의 일기는 자동으로 필터링됨
+        const { data: diaries, error } = await supabaseClient
+            .from('diaries')
+            .select('*')
+            .eq('user_id', session.user.id)   // 베스트 프랙티스: 프론트에서도 명시적 필터
+            .order('created_at', { ascending: false }); // 최신순
+
+        timelineLoading.classList.add('hidden');
+
+        if (error) {
+            console.error('타임라인 로드 오류:', error.message);
+            showToast('일기를 불러오는 데 실패했어요.');
+            return;
+        }
+
+        if (!diaries || diaries.length === 0) {
+            timelineEmpty.classList.remove('hidden');
+            return;
+        }
+
+        // 타임라인 카드 렌더링
+        diaries.forEach((diary, idx) => {
+            const card = createTimelineCard(diary, idx);
+            timelineList.appendChild(card);
+        });
+    }
+
+
+    /**
+     * 타임라인 카드 한 개를 HTML로 생성
+     * @param {Object} diary - Supabase에서 가져온 일기 데이터
+     * @param {number} idx   - 순서 (애니메이션 딜레이에 사용)
+     */
+    function createTimelineCard(diary, idx) {
+        const date = new Date(diary.created_at);
+        // 날짜 포맷: "2026년 05월 05일 수요일"
+        const dateStr = date.toLocaleDateString('ko-KR', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+        });
+        const timeStr = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+        // 일기 내용 미리보기 (60자 제한)
+        const preview = diary.content.length > 60
+            ? diary.content.slice(0, 60) + '...'
+            : diary.content;
+
+        // 태그 HTML 생성
+        const tagsHtml = diary.tags
+            ? diary.tags.map(t => `<span class="tl-tag">${t}</span>`).join('')
+            : '';
+
+        // 카드 요소 생성
+        const card = document.createElement('div');
+        card.className = 'timeline-card';
+        card.style.animationDelay = `${idx * 80}ms`;
+        card.innerHTML = `
+            <div class="tl-line-dot"></div>
+            <div class="tl-body">
+                <div class="tl-header">
+                    <div class="tl-date">${dateStr} ${timeStr}</div>
+                    ${diary.emotion ? `<span class="tl-emotion">${diary.emotion}</span>` : ''}
+                </div>
+                <p class="tl-preview">${preview}</p>
+                ${tagsHtml ? `<div class="tl-tags">${tagsHtml}</div>` : ''}
+                ${diary.counseling ? `<div class="tl-counseling">“${diary.counseling.slice(0, 80)}...”</div>` : ''}
+            </div>
+        `;
+
+        return card;
+    }
 
 
     // ─────────────────────────────────────────

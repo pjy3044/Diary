@@ -489,3 +489,216 @@ body {
         min-height: 100vh;
     }
 }
+
+/* ═══════════════════════════════════════
+   11. 저장 버튼 (헤더 우측)
+═══════════════════════════════════════ */
+.save-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 16px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(26, 26, 94, 0.3);
+    transition: var(--transition);
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(26, 26, 94, 0.4);
+}
+
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════
+   12. 뷰 전환 유틸리티
+═══════════════════════════════════════ */
+/* 숨김 처리: display:none 대신 height/opacity 애니메이션 가능 */
+.hidden {
+    display: none !important;
+}
+
+/* ═══════════════════════════════════════
+   13. 타임라인 뷰
+═══════════════════════════════════════ */
+.timeline-container {
+    position: relative;
+    padding: 8px 0 20px 24px;  /* 왼쪽 타임라인 라인 공간 확보 */
+}
+
+/* 세로 타임라인 라인 */
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--color-accent), transparent);
+    border-radius: 2px;
+}
+
+/* 로딩 상태 */
+.timeline-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px 0;
+    color: var(--color-text-sub);
+    font-size: 0.9rem;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-accent-soft);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 비어있을 때 */
+.timeline-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 48px 20px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 4px;
+}
+
+.timeline-empty p {
+    color: var(--color-text-sub);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.empty-sub {
+    font-size: 0.85rem !important;
+    color: var(--color-text-muted) !important;
+}
+
+/* 타임라인 카드 */
+.timeline-card {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.4s ease-out both;
+}
+
+/* 타임라인 점(dot) */
+.tl-line-dot {
+    position: absolute;
+    left: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    border: 2.5px solid white;
+    box-shadow: 0 0 0 2px var(--color-accent-soft);
+    margin-top: 14px;
+    flex-shrink: 0;
+}
+
+/* 카드 본문 */
+.tl-body {
+    flex: 1;
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-card);
+    margin-left: 10px;
+    border-left: 3px solid var(--color-accent-soft);
+    transition: var(--transition);
+}
+
+.tl-body:hover {
+    box-shadow: 0 6px 24px rgba(123, 111, 240, 0.15);
+    transform: translateY(-2px);
+}
+
+/* 카드 헤더: 날짜 + 감정 배지 */
+.tl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.tl-date {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* 감정 단어 배지 (타임라인용) */
+.tl-emotion {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 50px;
+    flex-shrink: 0;
+}
+
+/* 일기 미리보기 */
+.tl-preview {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--color-text-main);
+    margin-bottom: 8px;
+    word-break: keep-all;
+}
+
+/* 해시태그 */
+.tl-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.tl-tag {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 50px;
+}
+
+/* AI 상담 미리보기 */
+.tl-counseling {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--color-text-sub);
+    font-style: italic;
+    padding-top: 8px;
+    border-top: 1px dashed var(--color-border);
+}
+

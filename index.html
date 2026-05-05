@@ -8,6 +8,8 @@
     <!-- Google Fonts: 가독성 좋은 한국어 지원 폰트 -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
+    <!-- Supabase JS CDN (v2): 인증 및 DB 저장에 사용 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -22,16 +24,16 @@
                 <h1 class="header-title">AI 감정 일기</h1>
             </div>
             <div class="header-right">
-                <!-- 프로필 아바타 -->
-                <img src="C:/Users/User/.gemini/antigravity/brain/73062458-c71b-465e-970c-bd31c59ce622/user_avatar_1777973074615.png" 
-                     alt="내 프로필" 
-                     class="avatar" 
-                     id="profile-btn">
+                <!-- 저장 버튼 -->
+                <button class="save-btn" id="save-btn" title="일기 저장">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    저장
+                </button>
             </div>
         </header>
 
-        <!-- ───────────── 메인 컨텐츠 ───────────── -->
-        <main class="content">
+        <!-- ───────────── 메인 뷰 (일기 작성) ───────────── -->
+        <main class="content" id="view-diary">
 
             <!-- 오늘의 질문 섹션 -->
             <section class="question-section">
@@ -56,7 +58,7 @@
 
             <!-- 액션 버튼 섹션 -->
             <section class="action-section">
-                <!-- 음성 입력 버튼 (작은 원형) -->
+                <!-- 음성 입력 버튼 -->
                 <button class="btn-voice" id="voice-btn" title="음성으로 일기 쓰기">
                     음성 입력
                 </button>
@@ -88,6 +90,31 @@
 
         </main>
 
+        <!-- ───────────── 타임라인 뷰 (일기 목록) ───────────── -->
+        <main class="content hidden" id="view-list">
+            <section class="question-section">
+                <h2 class="main-question">나의 감정 기록</h2>
+                <p class="sub-title">저장된 일기들을 타임라인으로 돌아보세요.</p>
+            </section>
+
+            <!-- 타임라인 리스트 컨테이너 -->
+            <div class="timeline-container" id="timeline-container">
+                <!-- 로딩 상태 -->
+                <div class="timeline-loading" id="timeline-loading">
+                    <div class="loading-spinner"></div>
+                    <p>일기를 불러오는 중...</p>
+                </div>
+                <!-- 비어있을 때 -->
+                <div class="timeline-empty hidden" id="timeline-empty">
+                    <span class="empty-icon">📝</span>
+                    <p>아직 저장된 일기가 없어요.</p>
+                    <p class="empty-sub">일기를 작성하고 저장해 보세요!</p>
+                </div>
+                <!-- 타임라인 카드들이 여기에 동적 생성됩니다 -->
+                <div id="timeline-list"></div>
+            </div>
+        </main>
+
         <!-- ───────────── 하단 네비게이션 ───────────── -->
         <nav class="bottom-nav">
             <a href="#" class="nav-item active" id="nav-diary">
@@ -116,6 +143,9 @@
                 <span>내 정보</span>
             </a>
         </nav>
+
+        <!-- 토스트 알림 -->
+        <div class="toast" id="toast"></div>
 
     </div>
 
