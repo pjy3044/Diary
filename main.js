@@ -335,23 +335,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // ── Vercel 서버리스 함수(/api/chat)에 일기 내용 전송 ──
-            // 브라우저 → 우리 서버 → Gemini API (API 키는 서버에만 존재)
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ diaryContent: content })
             });
 
-            // 서버 응답 파싱
-            const data = await res.json();
+            // 서버에서 받은 원본 텍스트 (오류 파악용)
+            const rawText = await res.text();
+            let data;
 
-            if (!res.ok) {
-                // 서버에서 오류가 온 경우
-                throw new Error(data.error || 'AI 응답 오류');
+            try {
+                // JSON 파싱 시도
+                data = JSON.parse(rawText);
+            } catch {
+                // JSON이 아닌 경우 → HTML 오류 페이지 등 반환된 상황
+                throw new Error(`서버 응답 오류 (${res.status}): ${rawText.slice(0, 200)}`);
             }
 
-            // ── AI 상담사 헤더에 감정 단어 표시 ──
-            // 예: "AI 상담사의 한마디" → "💙 오늘의 감정: 불안 | AI 상담사의 한마디"
+            if (!res.ok) {
+                // 서버에서 오류 JSON이 온 경우 → 상세 메시지 포함
+                throw new Error(`[${res.status}] ${data.error || data.detail || 'AI 응답 오류'}`);
+            }
+
+            // ── AI 상담사 헤더에 감정 단어 배지 표시 ──
             const emotionBadge = document.querySelector('.ai-response-title');
             emotionBadge.innerHTML =
                 `<span class="emotion-badge">${data.emotion}</span> AI 상담사의 한마디`;
@@ -363,10 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHashtags(data.tags);
 
         } catch (err) {
-            // 네트워크 오류 또는 서버 오류 시 사용자에게 알림
-            console.error('AI 상담사 오류:', err.message);
-            showToast('AI 상담사 연결에 실패했어요. 잠시 후 다시 시도해 주세요.');
-            aiResponseText.textContent = '연결에 실패했습니다. 인터넷 연결을 확인해 주세요.';
+            // ❗ 오류 원인을 AI 응답 카드에 직접 표시 (디버깅용)
+            console.error('AI 상담사 오류 상세:', err.message);
+            aiResponseText.textContent = `⚠️ 오류: ${err.message}`;
+            hashtagContainer.innerHTML = '';
 
         } finally {
             // 성공/실패 여부와 무관하게 버튼 원상 복구
