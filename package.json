@@ -1,0 +1,8 @@
+{
+  "name": "ai-diary",
+  "version": "1.0.0",
+  "description": "AI 감정 일기 - Mind Pieces",
+  "engines": {
+    "node": "18.x"
+  }
+}
