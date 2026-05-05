@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─────────────────────────────────────────
     // anon key는 클라이언트에 노출해도 안전합니다.
     // 실제 보안은 Supabase RLS 정책이 담당합니다.
-    const SUPABASE_URL      = 'https://jszfwqenwkzoufaslfle.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzemZ3cWVud2t6b3VmYXNsZmxlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzAxMDUsImV4cCI6MjA5MzM0NjEwNX0.A5uchwusRS8tKKxYClgbya31HQXJqEK35adwqxVCljQ';
+    const SUPABASE_URL      = 'https://hpetmldmdrpobnsbbgtj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZXRtbGRtZHJwb2Juc2JiZ3RqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTYzNDYsImV4cCI6MjA5MzUzMjM0Nn0.MAIA64i5f-RQ4CsegytzxVn1YB6-iXYoqdyeLMhAnws';
 
     // window.supabase는 CDN 스크립트가 로드한 전역 객체
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
