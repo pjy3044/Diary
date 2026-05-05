@@ -1,0 +1,11 @@
+# 환경 변수 파일 (.env는 절대 깃허브에 올리면 안 됩니다!)
+.env
+.env.local
+.env.*.local
+
+# Node.js
+node_modules/
+
+# 운영체제 파일
+.DS_Store
+Thumbs.db

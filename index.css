@@ -1,0 +1,491 @@
+/*
+ * Mind Pieces - AI 감정 일기
+ * 새 디자인 시스템: 딥 네이비 + 라벤더 파스텔 테마
+ * 이미지에서 추출한 색상과 레이아웃을 최대한 재현
+ */
+
+/* ═══════════════════════════════════════
+   0. CSS 변수 (디자인 토큰)
+═══════════════════════════════════════ */
+:root {
+    /* 메인 컬러 팔레트 */
+    --color-bg:          #f0f0fa;       /* 전체 배경: 연한 라벤더 */
+    --color-surface:     #ffffff;       /* 카드/입력창 배경 */
+    --color-primary:     #1a1a5e;       /* 메인 버튼: 딥 네이비 */
+    --color-primary-mid: #3c3c9e;       /* 버튼 그래디언트 중간 */
+    --color-accent:      #7b6ff0;       /* 강조: 밝은 퍼플 */
+    --color-accent-soft: #ede9ff;       /* 소프트 퍼플 (배지, 해시태그) */
+    --color-text-main:   #1a1a2e;       /* 본문 텍스트 */
+    --color-text-sub:    #6b7280;       /* 보조 텍스트 */
+    --color-text-muted:  #b0b7c3;       /* 힌트/플레이스홀더 */
+    --color-nav-active:  #3c3c9e;       /* 하단 네비 활성 색상 */
+    --color-border:      #e8e8f5;       /* 테두리 */
+
+    /* 그림자 */
+    --shadow-card:  0 4px 20px rgba(60, 60, 158, 0.08);
+    --shadow-btn:   0 8px 24px rgba(26, 26, 94, 0.35);
+
+    /* 애니메이션 */
+    --transition:   all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 보더 라디우스 */
+    --radius-card:  20px;
+    --radius-btn:   50px;
+    --radius-sm:    12px;
+}
+
+/* ═══════════════════════════════════════
+   1. 리셋 & 기본 설정
+═══════════════════════════════════════ */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 링크 스타일 초기화 */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ═══════════════════════════════════════
+   2. 앱 컨테이너 (모바일 프레임)
+═══════════════════════════════════════ */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 430px;  /* 모바일 최대 너비 */
+    min-height: 100vh;
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ═══════════════════════════════════════
+   3. 헤더
+═══════════════════════════════════════ */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 56px 24px 16px;  /* 상단에 여유 공간 (상태바 영역) */
+    background: var(--color-bg);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 반짝이 이모지 아이콘 */
+.header-icon {
+    font-size: 1.2rem;
+    color: var(--color-accent);
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    50%       { opacity: 0.6; transform: scale(1.2) rotate(15deg); }
+}
+
+.header-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+/* 프로필 아바타 */
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2.5px solid var(--color-accent-soft);
+    box-shadow: 0 2px 8px rgba(123, 111, 240, 0.2);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.avatar:hover {
+    transform: scale(1.08);
+    box-shadow: 0 4px 16px rgba(123, 111, 240, 0.35);
+}
+
+/* ═══════════════════════════════════════
+   4. 메인 컨텐츠
+═══════════════════════════════════════ */
+.content {
+    flex: 1;
+    padding: 8px 20px 100px;  /* 하단 네비 높이만큼 패딩 확보 */
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+/* 스크롤바 숨기기 (모바일처럼 보이게) */
+.content::-webkit-scrollbar { display: none; }
+.content { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ═══════════════════════════════════════
+   5. 오늘의 질문 섹션
+═══════════════════════════════════════ */
+.question-section {
+    padding: 16px 0 24px;
+}
+
+.main-question {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--color-text-main);
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+}
+
+.sub-title {
+    font-size: 0.95rem;
+    color: var(--color-text-sub);
+    font-weight: 400;
+}
+
+/* ═══════════════════════════════════════
+   6. 일기 입력 섹션
+═══════════════════════════════════════ */
+.input-section {
+    margin-bottom: 20px;
+}
+
+.textarea-wrapper {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+    border: 1.5px solid transparent;
+    transition: var(--transition);
+}
+
+/* 포커스 시 테두리 강조 */
+.textarea-wrapper:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 20px rgba(123, 111, 240, 0.15);
+}
+
+/* 텍스트 영역 */
+#diary-input {
+    width: 100%;
+    min-height: 200px;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--color-text-main);
+    background: transparent;
+    /* 플레이스홀더 색상 */
+}
+
+#diary-input::placeholder {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* 글자 수 카운터 */
+.char-counter {
+    text-align: right;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+/* 글자 수가 80% 이상 시 경고 색상 */
+.char-counter.warning {
+    color: #e85d75;
+}
+
+/* ═══════════════════════════════════════
+   7. 액션 버튼 섹션
+═══════════════════════════════════════ */
+.action-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+/* 음성 입력 버튼 (텍스트 라벨형, 너비 자동 조절) */
+.btn-voice {
+    flex-shrink: 0;
+    height: 56px;
+    padding: 0 20px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;  /* 년비 부족 시 줄바꿼 방지 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-voice:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(123, 111, 240, 0.2);
+}
+
+/* 음성 녹음 중 상태 */
+.btn-voice.recording {
+    background: #ffe0e0;
+    animation: pulse-red 1s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 93, 117, 0.4); }
+    50%       { box-shadow: 0 0 0 10px rgba(232, 93, 117, 0); }
+}
+
+/* AI 상담 메인 버튼 (크고 진한 네이비) */
+.btn-ai {
+    flex: 1;
+    height: 56px;
+    border: none;
+    border-radius: var(--radius-btn);
+    /* 딥 네이비 → 미드 퍼플 그래디언트 */
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-mid) 100%);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: var(--shadow-btn);
+    transition: var(--transition);
+}
+
+.btn-ai:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(26, 26, 94, 0.45);
+    filter: brightness(1.1);
+}
+
+.btn-ai:active {
+    transform: translateY(0);
+}
+
+/* 버튼 내부 아이콘 */
+.ai-btn-icon {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* 로딩 중 상태 */
+.btn-ai.loading {
+    opacity: 0.75;
+    cursor: not-allowed;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 0.75; }
+    50%       { opacity: 0.9; }
+}
+
+/* ═══════════════════════════════════════
+   8. AI 상담사 응답 섹션
+═══════════════════════════════════════ */
+.ai-response-section {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 섹션 헤더: 로고 + 제목 */
+.ai-response-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+/* 이미지의 "✧_✿RK" 로고 스타일 */
+.ai-logo-icon {
+    font-size: 1.05rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--color-accent), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+}
+
+.ai-response-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+/* 상담사 헤더에 표시되는 감정 단어 배지 */
+.emotion-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 50px;
+    margin-right: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+}
+
+/* AI 답변 카드 */
+.ai-response-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    box-shadow: var(--shadow-card);
+    border-left: 3px solid var(--color-accent);
+}
+
+/* AI 응답 본문 텍스트 */
+#ai-response-text {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text-main);
+    margin-bottom: 16px;
+    word-break: keep-all;
+}
+
+/* 해시태그 컨테이너 */
+.hashtag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* 개별 해시태그 칩 */
+.hashtag {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 50px;
+    cursor: default;
+    transition: var(--transition);
+}
+
+.hashtag:hover {
+    background: var(--color-accent);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* ═══════════════════════════════════════
+   9. 하단 네비게이션
+═══════════════════════════════════════ */
+.bottom-nav {
+    position: fixed;      /* 화면 하단에 고정 */
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;     /* 앱 컨테이너 너비와 동일 */
+    height: 76px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: 8px;  /* 홈 인디케이터 여백 */
+    /* 글래스 효과 */
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 100;
+}
+
+/* 네비게이션 아이템 */
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-muted);
+    transition: var(--transition);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.nav-item svg {
+    stroke-width: 1.8;
+}
+
+.nav-item span {
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+/* 활성화된 탭 강조 */
+.nav-item.active {
+    color: var(--color-nav-active);
+}
+
+.nav-item.active svg {
+    stroke-width: 2.5;
+}
+
+.nav-item:hover {
+    color: var(--color-accent);
+    background: var(--color-accent-soft);
+}
+
+/* ═══════════════════════════════════════
+   10. 반응형: 데스크탑에서 모바일 프레임처럼 보이기
+═══════════════════════════════════════ */
+@media (min-width: 500px) {
+    body {
+        background: #d4d0ea;  /* 외부 배경 더 진한 라벤더 */
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .app-container {
+        /* 데스크탑에서 스마트폰처럼 보이도록 그림자 추가 */
+        box-shadow: 0 20px 60px rgba(26, 26, 94, 0.2);
+        min-height: 100vh;
+    }
+}

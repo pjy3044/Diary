@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 감정 일기</title>
+    <meta name="description" content="당신의 소중한 감정을 기록하고 AI 상담사와 이야기를 나눠보세요.">
+    <!-- Google Fonts: 가독성 좋은 한국어 지원 폰트 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+    <!-- 모바일 앱 컨테이너 -->
+    <div class="app-container">
+
+        <!-- ───────────── 상단 헤더 ───────────── -->
+        <header class="header">
+            <div class="header-left">
+                <!-- 반짝이 아이콘 + 앱 제목 -->
+                <span class="header-icon">✦</span>
+                <h1 class="header-title">AI 감정 일기</h1>
+            </div>
+            <div class="header-right">
+                <!-- 프로필 아바타 -->
+                <img src="C:/Users/User/.gemini/antigravity/brain/73062458-c71b-465e-970c-bd31c59ce622/user_avatar_1777973074615.png" 
+                     alt="내 프로필" 
+                     class="avatar" 
+                     id="profile-btn">
+            </div>
+        </header>
+
+        <!-- ───────────── 메인 컨텐츠 ───────────── -->
+        <main class="content">
+
+            <!-- 오늘의 질문 섹션 -->
+            <section class="question-section">
+                <h2 class="main-question">오늘 하루는 어땠나요?</h2>
+                <p class="sub-title">당신의 소중한 감정을 들려주세요.</p>
+            </section>
+
+            <!-- 일기 입력 섹션 -->
+            <section class="input-section">
+                <div class="textarea-wrapper">
+                    <textarea 
+                        id="diary-input" 
+                        placeholder="여기에 일기를 작성해 보세요... (학교 생활, 친구 관계, 혹은 오늘 느낀 특별한 감정 등)"
+                        maxlength="2000"
+                    ></textarea>
+                    <!-- 글자 수 카운터 -->
+                    <div class="char-counter">
+                        <span id="char-count">0</span> / 2000
+                    </div>
+                </div>
+            </section>
+
+            <!-- 액션 버튼 섹션 -->
+            <section class="action-section">
+                <!-- 음성 입력 버튼 (작은 원형) -->
+                <button class="btn-voice" id="voice-btn" title="음성으로 일기 쓰기">
+                    음성 입력
+                </button>
+                <!-- AI 상담 버튼 (큰 메인 버튼) -->
+                <button class="btn-ai" id="ai-btn">
+                    <span class="ai-btn-icon">◎</span>
+                    AI 상담자에게 물어보기
+                </button>
+            </section>
+
+            <!-- AI 상담사 응답 섹션 -->
+            <section class="ai-response-section" id="ai-response-section">
+                <!-- 응답 섹션 헤더: 로고 + 제목 -->
+                <div class="ai-response-header">
+                    <span class="ai-logo-icon">✦_✿RK</span>
+                    <span class="ai-response-title">AI 상담사의 한마디</span>
+                </div>
+                <!-- AI 응답 카드 -->
+                <div class="ai-response-card">
+                    <p id="ai-response-text">
+                        일기를 작성하고 'AI 상담자에게 물어보기' 버튼을 눌러주세요. AI 상담사의 따뜻한 한마디가 여기에 나타납니다.
+                    </p>
+                    <!-- 감정 해시태그 -->
+                    <div class="hashtag-container" id="hashtag-container">
+                        <!-- 자바스크립트에서 동적으로 생성됩니다 -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ───────────── 하단 네비게이션 ───────────── -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" id="nav-diary">
+                <!-- 일기 아이콘 (연필/일기장) -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span>일기</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-list">
+                <!-- 목록 아이콘 -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span>목록</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-insights">
+                <!-- 분석 아이콘 (막대 그래프) -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>분석</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-rest">
+                <!-- 쉼터 아이콘 (하트) -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span>쉼터</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-profile">
+                <!-- 내 정보 아이콘 (사람) -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>내 정보</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
