@@ -59,7 +59,7 @@ module.exports = async function handler(req, res) {
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: {
                         temperature: 0.7,   // 창의성 조절 (0=일관적, 1=창의적)
-                        maxOutputTokens: 300 // 응답 최대 길이 제한
+                        maxOutputTokens: 600 // 응답 최대 길이 (300→600으로 증가: JSON이 잘리는 문제 방지)
                     }
                 })
             }
