@@ -61,27 +61,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // onAuthStateChange: 로그인/로그아웃 이벤트를 실시간 감지
     // → 페이지 로드 시, OAuth 콜백 시 모두 자동으로 작동
     // ─────────────────────────────────────────
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (session && session.user) {
-            // ── 로그인 성공: 로그인 화면 숨기고 앱 표시 ──
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        // \uc775\uba85 \uc0ac\uc6a9\uc790(is_anonymous) \uc5ec\ubd80 \ud655\uc778
+        // \u2192 \uc774\uc804 \ucf54\ub4dc\uc5d0\uc11c \uc800\uc7a5\ub41c \uc775\uba85 \uc138\uc158\uc774 \uc788\uc5b4\ub3c4 \ub85c\uadf8\uc778 \ud654\uba74 \uc720\uc9c0
+        // is_anonymous: true  = \uc775\uba85 \uc0ac\uc6a9\uc790 (\ub85c\uadf8\uc778 \ud654\uba74 \uc720\uc9c0\ud574\uc57c \ud568)
+        // is_anonymous: false = Google \ub4f1 \uc2e4\uc81c \ub85c\uadf8\uc778 \uc0ac\uc6a9\uc790
+        const isRealUser = session && session.user && !session.user.is_anonymous;
+
+        if (isRealUser) {
+            // \u2500\u2500 Google \ub85c\uadf8\uc778 \uc131\uacf5: \ub85c\uadf8\uc778 \ud654\uba74 \uc228\uae30\uace0 \uc571 \ud45c\uc2dc \u2500\u2500
             loginScreen.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
 
-            // 사용자 이메일 짧게 표시 (10자 이상이면 잘라서 ...)
+            // \uc0ac\uc6a9\uc790 \uc774\uba54\uc77c \uc9e7\uac8c \ud45c\uc2dc (10\uc790 \uc774\uc0c1\uc774\uba74 \uc798\ub77c\uc11c ...)
             const email = session.user.email || '';
             userEmailEl.textContent = email.length > 12
                 ? email.slice(0, 10) + '...'
                 : email;
 
-            console.log('✅ 로그인:', session.user.email, '| 이벤트:', event);
+            console.log('✅ \ub85c\uadf8\uc778:', session.user.email, '| \uc774\ubca4\ud2b8:', event);
 
         } else {
-            // ── 로그아웃: 로그인 화면 다시 표시 ──
+            // \u2500\u2500 \uc775\uba85 \uc138\uc158\uc774\uac70\ub098 \ubbf8\ub85c\uadf8\uc778: \ub85c\uadf8\uc778 \ud654\uba74 \ud45c\uc2dc \u2500\u2500
+
+            // \ub9cc\uc57d \uc775\uba85 \uc138\uc158\uc774\ub77c\uba74 \uc790\ub3d9\uc73c\ub85c \uc81c\uac70 (\uc774\uc804 \ucf54\ub4dc \uc794\uc7ac \ucf54\ub4dc \ub300\ube44)
+            if (session && session.user && session.user.is_anonymous) {
+                console.log('\uad6c \uc775\uba85 \uc138\uc158 \ubc1c\uacac \u2192 \uc790\ub3d9 \uc81c\uac70');
+                await supabaseClient.auth.signOut();
+                return; // signOut\uc774 \ub2e4\uc2dc onAuthStateChange\ub97c \ud638\ucd9c\ud558\ubbc0\ub85c \uc774 \uc2e4\ud589\uc740 \uc911\ub2e8
+            }
+
             loginScreen.classList.remove('hidden');
             logoutBtn.classList.add('hidden');
             userEmailEl.textContent = '';
 
-            console.log('무세션 또는 로그아웃 상태');
+            console.log('\ubbf8\ub85c\uadf8\uc778 \ub610\ub294 \ub85c\uadf8\uc544\uc6c3 \uc0c1\ud0dc');
         }
     });
 
