@@ -18,7 +18,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ─────────────────────────────────────────
-    // 0. Supabase 초기화 (익명 인증)
+    // 0. Supabase 초기화 + Google OAuth 인증
     // ─────────────────────────────────────────
     // anon key는 클라이언트에 노출해도 안전합니다.
     // 실제 보안은 Supabase RLS 정책이 담당합니다.
@@ -27,24 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // window.supabase는 CDN 스크립트가 로드한 전역 객체
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 익명 로그인: 회원가입 없이 즉시 사용 가능한 세션 생성
-    // getSession()으로 기존 세션 확인 후, 없으면 signInAnonymously() 호출
-    // ※ .then() 방식은 비동기 완료 전에 저장 버튼을 누를 수 있어 문제 발생
-    //    → 저장 버튼 내부에서도 세션을 확인하고 직접 처리하는 방식으로 보완
-    supabaseClient.auth.getSession().then(async ({ data }) => {
-        if (!data.session) {
-            const { error } = await supabaseClient.auth.signInAnonymously();
-            if (error) {
-                console.error('익명 로그인 실패:', error.message,
-                    '→ Supabase 대시보드에서 Anonymous Auth를 활성화했는지 확인하세요.');
-            } else {
-                console.log('✅ 익명 세션 생성 완료');
-            }
-        } else {
-            console.log('✅ 기존 세션 재사용');
-        }
-    });
 
     // 현재 AI 응답 상태 저장 (저장 버튼에서 사용)
     let lastAiResult = null; // { emotion, counseling, tags }
@@ -67,6 +49,86 @@ document.addEventListener('DOMContentLoaded', () => {
     const timelineList     = document.getElementById('timeline-list');
     const timelineLoading  = document.getElementById('timeline-loading');
     const timelineEmpty    = document.getElementById('timeline-empty');
+    // 인증 관련 DOM
+    const loginScreen      = document.getElementById('login-screen');
+    const googleLoginBtn   = document.getElementById('google-login-btn');
+    const logoutBtn        = document.getElementById('logout-btn');
+    const userEmailEl      = document.getElementById('user-email');
+
+
+    // ─────────────────────────────────────────
+    // 0-A. 인증 상태 감지 (베스트 프랙티스)
+    // onAuthStateChange: 로그인/로그아웃 이벤트를 실시간 감지
+    // → 페이지 로드 시, OAuth 콜백 시 모두 자동으로 작동
+    // ─────────────────────────────────────────
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (session && session.user) {
+            // ── 로그인 성공: 로그인 화면 숨기고 앱 표시 ──
+            loginScreen.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+
+            // 사용자 이메일 짧게 표시 (10자 이상이면 잘라서 ...)
+            const email = session.user.email || '';
+            userEmailEl.textContent = email.length > 12
+                ? email.slice(0, 10) + '...'
+                : email;
+
+            console.log('✅ 로그인:', session.user.email, '| 이벤트:', event);
+
+        } else {
+            // ── 로그아웃: 로그인 화면 다시 표시 ──
+            loginScreen.classList.remove('hidden');
+            logoutBtn.classList.add('hidden');
+            userEmailEl.textContent = '';
+
+            console.log('무세션 또는 로그아웃 상태');
+        }
+    });
+
+
+    // ─────────────────────────────────────────
+    // 0-B. Google 로그인 버튼
+    // signInWithOAuth: 구글 OAuth 포탈로 리다이렉트
+    // redirectTo: 로그인 완료 후 돌아올 주소
+    // ─────────────────────────────────────────
+    googleLoginBtn.addEventListener('click', async () => {
+        googleLoginBtn.disabled = true;
+        googleLoginBtn.textContent = '연동 중...';
+
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // 로그인 성공 후 이 URL로 리다이렉트
+                // Supabase 대시보드의 Redirect URLs에도 등록해야 함
+                redirectTo: window.location.origin,
+                // 한 번만 로그인하고 직접 호충 (prompt: 'select_account'로 하면 항상 계정 선택화면)
+                queryParams: { access_type: 'offline', prompt: 'consent' }
+            }
+        });
+
+        if (error) {
+            console.error('Google 로그인 실패:', error.message);
+            showToast('❌ Google 로그인에 실패했어요: ' + error.message);
+            googleLoginBtn.disabled = false;
+            googleLoginBtn.innerHTML = '구글 계정으로 시작하기';
+        }
+        // 성공 시는 구글 인증 페이지로 리다이렉트되므로 별도 처리 불필요
+    });
+
+
+    // ─────────────────────────────────────────
+    // 0-C. 로그아웃 버튼
+    // ─────────────────────────────────────────
+    logoutBtn.addEventListener('click', async () => {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            showToast('❌ 로그아웃 실패: ' + error.message);
+        } else {
+            showToast('👋 로그아웃 되었어요.');
+            // onAuthStateChange가 자동으로 로그인 화면을 다시 표시해줄 것임
+        }
+    });
+
 
 
     // ─────────────────────────────────────────
