@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isRealUser) {
             // ── Google 로그인 성공: 로그인 화면 숨기고 앱 표시 ──
             loginScreen.classList.add('hidden');
-            logoutBtn.classList.remove('hidden');
 
             // 사용자 이름/이메일 추출
             // Google 로그인 시 user_metadata.full_name에 이름이 들어오면 사용, 없으면 이메일 @ 앞부분 사용
@@ -85,11 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const greetingEl = document.getElementById('greeting-name');
             if (greetingEl) greetingEl.textContent = `${fullName} 님~`;
 
-            // 헤더 이메일 짧게 표시
-            const email = session.user.email || '';
-            userEmailEl.textContent = email.length > 12
-                ? email.slice(0, 10) + '...'
-                : email;
 
             console.log('✅ 로그인:', session.user.email, '| 이벤트:', event);
 
@@ -104,8 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             loginScreen.classList.remove('hidden');
-            logoutBtn.classList.add('hidden');
-            userEmailEl.textContent = '';
 
             console.log('\ubbf8\ub85c\uadf8\uc778 \ub610\ub294 \ub85c\uadf8\uc544\uc6c3 \uc0c1\ud0dc');
         }
