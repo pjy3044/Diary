@@ -43,10 +43,11 @@ module.exports = async function handler(req, res) {
     // Gemini에게 보낼 프롬프트
     // JSON 형식으로 답하게 해서 파싱을 안정적으로 만듦
     // ─────────────────────────────────────────
+    // 한국어 counseling은 영어보다 토큰 소모가 많으므로 1~2문장으로 제한
     const prompt = `학생의 감정일기: "${diaryContent}"
 
 반드시 아래 JSON만 출력. 코드블록, 설명, 마크다운 절대 금지.
-{"emotion":"감정한단어","counseling":"따뜻한공감2~3문장존댓말","tags":["#태그1","#태그2"]}`;
+{"emotion":"감정한단어","counseling":"따뜻한공감1~2문장존댓말","tags":["#태그1","#태그2"]}`;
 
     try {
         // Gemini 2.0 Flash 모델 호출
@@ -59,7 +60,7 @@ module.exports = async function handler(req, res) {
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: {
                         temperature: 0.7,   // 창의성 조절 (0=일관적, 1=창의적)
-                        maxOutputTokens: 600 // 응답 최대 길이 (300→600으로 증가: JSON이 잘리는 문제 방지)
+                        maxOutputTokens: 1000 // 600→1000: 한국어는 영어보다 토큰 소모가 많아 넉넉하게 설정
                     }
                 })
             }
