@@ -89,6 +89,57 @@ body {
     background: var(--color-bg);
 }
 
+/* 중앙 정렬 헤더: 이메일/버튼 없이 제목만 */
+.header-centered {
+    justify-content: center;
+    gap: 10px;
+    padding-bottom: 8px;
+}
+
+/* 그라디언트 제목: "AI 감사일기" */
+.header-title-gradient {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* AI 카드 내부 저장 버튼 */
+.save-btn-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 48px;
+    margin-top: 16px;
+    border: none;
+    border-radius: var(--radius-btn);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    color: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(26, 26, 94, 0.3);
+    transition: var(--transition);
+}
+
+.save-btn-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26, 26, 94, 0.4);
+    filter: brightness(1.08);
+}
+
+.save-btn-card:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .header-left {
     display: flex;
     align-items: center;
