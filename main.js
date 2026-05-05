@@ -354,8 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!res.ok) {
-                // 서버에서 오류 JSON이 온 경우 → 상세 메시지 포함
-                throw new Error(`[${res.status}] ${data.error || data.detail || 'AI 응답 오류'}`);
+                // 서버에서 오류 JSON이 온 경우 → detail(Gemini 실제 오류)을 우선 표시
+                throw new Error(`[${res.status}] ${data.detail || data.error || 'AI 응답 오류'}`);
             }
 
             // ── AI 상담사 헤더에 감정 단어 배지 표시 ──
