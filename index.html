@@ -48,7 +48,7 @@
             <div class="header-left">
                 <!-- 반짝이 아이콘 + 앱 제목 -->
                 <span class="header-icon">✦</span>
-                <h1 class="header-title">AI 감정 일기</h1>
+                <h1 class="header-title">감사일기</h1>
             </div>
             <div class="header-right">
                 <!-- 로그인한 사용자 이메일 표시 -->
@@ -70,8 +70,11 @@
 
             <!-- 오늘의 질문 섹션 -->
             <section class="question-section">
-                <h2 class="main-question">오늘 하루는 어땠나요?</h2>
-                <p class="sub-title">당신의 소중한 감정을 들려주세요.</p>
+                <!-- id="greeting-name"에 JS가 사용자 이름을 동적으로 넣어줌 -->
+                <h2 class="main-question">
+                    <span id="greeting-name"></span>
+                </h2>
+                <p class="sub-title">오늘 하루는 어때요?</p>
             </section>
 
             <!-- 일기 입력 섹션 -->
@@ -170,10 +173,10 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 <span>쉼터</span>
             </a>
-            <a href="#" class="nav-item" id="nav-profile">
-                <!-- 내 정보 아이콘 (사람) -->
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>내 정보</span>
+            <a href="#" class="nav-item" id="nav-logout">
+                <!-- 로그아웃 아이콘 -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>로그아웃</span>
             </a>
         </nav>
 

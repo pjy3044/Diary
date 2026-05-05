@@ -63,28 +63,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─────────────────────────────────────────
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
         // \uc775\uba85 \uc0ac\uc6a9\uc790(is_anonymous) \uc5ec\ubd80 \ud655\uc778
-        // \u2192 \uc774\uc804 \ucf54\ub4dc\uc5d0\uc11c \uc800\uc7a5\ub41c \uc775\uba85 \uc138\uc158\uc774 \uc788\uc5b4\ub3c4 \ub85c\uadf8\uc778 \ud654\uba74 \uc720\uc9c0
-        // is_anonymous: true  = \uc775\uba85 \uc0ac\uc6a9\uc790 (\ub85c\uadf8\uc778 \ud654\uba74 \uc720\uc9c0\ud574\uc57c \ud568)
-        // is_anonymous: false = Google \ub4f1 \uc2e4\uc81c \ub85c\uadf8\uc778 \uc0ac\uc6a9\uc790
+        // 익명 사용자(is_anonymous) 여부 확인
+        // → 이전 코드에서 저장된 익명 세션이 있어도 로그인 화면 유지
+        // is_anonymous: true  = 익명 사용자 (로그인 화면 유지해야 함)
+        // is_anonymous: false = Google 등 실제 로그인 사용자
         const isRealUser = session && session.user && !session.user.is_anonymous;
 
         if (isRealUser) {
-            // \u2500\u2500 Google \ub85c\uadf8\uc778 \uc131\uacf5: \ub85c\uadf8\uc778 \ud654\uba74 \uc228\uae30\uace0 \uc571 \ud45c\uc2dc \u2500\u2500
+            // ── Google 로그인 성공: 로그인 화면 숨기고 앱 표시 ──
             loginScreen.classList.add('hidden');
             logoutBtn.classList.remove('hidden');
 
-            // \uc0ac\uc6a9\uc790 \uc774\uba54\uc77c \uc9e7\uac8c \ud45c\uc2dc (10\uc790 \uc774\uc0c1\uc774\uba74 \uc798\ub77c\uc11c ...)
+            // 사용자 이름/이메일 추출
+            // Google 로그인 시 user_metadata.full_name에 이름이 들어오면 사용, 없으면 이메일 @ 앞부분 사용
+            const fullName = session.user.user_metadata?.full_name
+                || session.user.user_metadata?.name
+                || session.user.email?.split('@')[0]
+                || '님';
+
+            // 인삿말 업데이트: "[id] 님~"
+            const greetingEl = document.getElementById('greeting-name');
+            if (greetingEl) greetingEl.textContent = `${fullName} 님~`;
+
+            // 헤더 이메일 짧게 표시
             const email = session.user.email || '';
             userEmailEl.textContent = email.length > 12
                 ? email.slice(0, 10) + '...'
                 : email;
 
-            console.log('✅ \ub85c\uadf8\uc778:', session.user.email, '| \uc774\ubca4\ud2b8:', event);
+            console.log('✅ 로그인:', session.user.email, '| 이벤트:', event);
 
         } else {
-            // \u2500\u2500 \uc775\uba85 \uc138\uc158\uc774\uac70\ub098 \ubbf8\ub85c\uadf8\uc778: \ub85c\uadf8\uc778 \ud654\uba74 \ud45c\uc2dc \u2500\u2500
+            // ── 익명 세션이거나 미로그인: 로그인 화면 표시 ──
 
-            // \ub9cc\uc57d \uc775\uba85 \uc138\uc158\uc774\ub77c\uba74 \uc790\ub3d9\uc73c\ub85c \uc81c\uac70 (\uc774\uc804 \ucf54\ub4dc \uc794\uc7ac \ucf54\ub4dc \ub300\ube44)
+            // 만약 익명 세션이라면 자동으로 제거 (이전 코드 잔재 코드 대비)
             if (session && session.user && session.user.is_anonymous) {
                 console.log('\uad6c \uc775\uba85 \uc138\uc158 \ubc1c\uacac \u2192 \uc790\ub3d9 \uc81c\uac70');
                 await supabaseClient.auth.signOut();
@@ -535,6 +547,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewDiary.classList.add('hidden');
                 viewList.classList.remove('hidden');
                 await loadTimeline(); // 일기 목록 로드
+
+            } else if (id === 'nav-logout') {
+                // 로그아웃 처리
+                // active 클래스는 로그인 화면에서 의미 없으므로 일기 탭으로 복구
+                navItems.forEach(i => i.classList.remove('active'));
+                document.getElementById('nav-diary').classList.add('active');
+
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) {
+                    showToast('❌ 로그아웃 실패: ' + error.message);
+                } else {
+                    showToast('👋 로그아웃 되었어요.');
+                    // onAuthStateChange가 자동으로 로그인 화면을 표시해줌
+                }
+
             } else {
                 // 일기 작성 뷰로 전환
                 viewList.classList.add('hidden');
