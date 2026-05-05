@@ -29,10 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // 익명 로그인: 회원가입 없이 즉시 사용 가능한 세션 생성
-    // 이미 세션이 있으면 재사용, 없으면 새로 생성
-    supabaseClient.auth.getSession().then(({ data }) => {
+    // getSession()으로 기존 세션 확인 후, 없으면 signInAnonymously() 호출
+    // ※ .then() 방식은 비동기 완료 전에 저장 버튼을 누를 수 있어 문제 발생
+    //    → 저장 버튼 내부에서도 세션을 확인하고 직접 처리하는 방식으로 보완
+    supabaseClient.auth.getSession().then(async ({ data }) => {
         if (!data.session) {
-            supabaseClient.auth.signInAnonymously();
+            const { error } = await supabaseClient.auth.signInAnonymously();
+            if (error) {
+                console.error('익명 로그인 실패:', error.message,
+                    '→ Supabase 대시보드에서 Anonymous Auth를 활성화했는지 확인하세요.');
+            } else {
+                console.log('✅ 익명 세션 생성 완료');
+            }
+        } else {
+            console.log('✅ 기존 세션 재사용');
         }
     });
 
@@ -471,10 +481,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Supabase 세션 확인
-        const { data: { session } } = await supabaseClient.auth.getSession();
+        let { data: { session } } = await supabaseClient.auth.getSession();
+
+        // 세션이 없으면 익명 로그인 직접 시도
+        // (앱 시작 직후 바로 저장하거나 Anonymous Auth가 방금 활성화된 경우)
         if (!session) {
-            showToast('세션이 없어요. 잠시 후 다시 시도해 주세요.');
-            return;
+            showToast('🔄 세션 초기화 중...');
+            const { data: signInData, error: signInError } =
+                await supabaseClient.auth.signInAnonymously();
+
+            if (signInError) {
+                // 익명 로그인도 실패한 경우
+                // → Supabase 대시보드 Anonymous Auth 미활성화가 원인일 가능성 높음
+                showToast('❌ ' + signInError.message +
+                    ' (Supabase → Authentication → Providers → Anonymous 활성화 확인)');
+                return;
+            }
+            session = signInData.session;
         }
 
         // 저장 버튼 UI: 로딩 상태
