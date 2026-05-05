@@ -43,18 +43,10 @@ module.exports = async function handler(req, res) {
     // Gemini에게 보낼 프롬프트
     // JSON 형식으로 답하게 해서 파싱을 안정적으로 만듦
     // ─────────────────────────────────────────
-    const prompt = `
-다음은 학생이 오늘 쓴 감정 일기입니다:
-"${diaryContent}"
+    const prompt = `학생의 감정일기: "${diaryContent}"
 
-위 일기를 읽고, 반드시 아래 JSON 형식으로만 답변하세요.
-마크다운 코드블록(\`\`\`json)이나 다른 텍스트는 절대 포함하지 마세요.
-
-{
-  "emotion": "오늘의 감정을 가장 잘 나타내는 단어 딱 하나 (예: 불안, 설렘, 외로움, 뿌듯함)",
-  "counseling": "학생에게 전하는 따뜻한 공감 메시지. 반드시 2~3문장 이내. 존댓말 사용. 감정을 인정하고 위로하는 내용.",
-  "tags": ["#태그1", "#태그2"]
-}`;
+반드시 아래 JSON만 출력. 코드블록, 설명, 마크다운 절대 금지.
+{"emotion":"감정한단어","counseling":"따뜻한공감2~3문장존댓말","tags":["#태그1","#태그2"]}`;
 
     try {
         // Gemini 2.0 Flash 모델 호출
@@ -89,11 +81,15 @@ module.exports = async function handler(req, res) {
             throw new Error('Gemini로부터 유효한 응답을 받지 못했습니다.');
         }
 
-        // Gemini가 가끔 ```json ... ``` 블록으로 감싸는 경우를 제거
-        const cleanText = rawText.replace(/```json|```/g, '').trim();
+        // Gemini 응답에서 { } JSON 블록만 정규식으로 정확히 추출
+        // → 마크다운·주석·불필요한 텍스트가 앞뒤에 있어도 안전하게 작동
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error(`JSON 추출 실패. Gemini 원문: ${rawText.slice(0, 200)}`);
+        }
 
         // JSON 파싱
-        const parsed = JSON.parse(cleanText);
+        const parsed = JSON.parse(jsonMatch[0]);
 
         return res.status(200).json({
             emotion:    parsed.emotion    || '복잡한 감정',
